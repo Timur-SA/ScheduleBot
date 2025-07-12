@@ -1,6 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
+import re
 import data
 router = Router()
 
@@ -28,9 +29,14 @@ async def days(msg: Message): print(data.getDays(data.loadData()))
 
 
 @router.message(Command("add"))
-async def add(msg: Message, cmd : Command):
-    await msg.reply(f"Привет!")
-
+async def add(msg: Message):
+    if(re.match(r"^/add (.+?) (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$", msg.text)):
+        await msg.answer("Yes")
+    else:
+        await msg.answer("No")
+        
+    args = msg.text.split()[1:]
+    
 
 @router.message(Command("help"))
 async def help(msg: Message):
