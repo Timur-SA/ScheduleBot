@@ -12,7 +12,7 @@ def loadData(name="global"):
 
 def getDays(dataTable): 
     for day in dataTable:
-        print(f"{day} - {[event for event in day]}")
+        print(f"{day}")
 
 def getDayData(dataTable, delta = 0):
     if(delta < 0): print("Runtime Warning: Delta < 0!")
@@ -24,3 +24,21 @@ def getDayData(dataTable, delta = 0):
     #events = dataTable.get("2025-07-13", [])
     day = dataTable.get(eventsDay.strftime("%Y-%m-%d"), [])
     return day
+
+
+def prepareDayMessage(eventsList):
+    eventsMessages = []
+    for event in eventsList:
+        eventsMessages.append(f"{event['time']} - {event['name']}\n")
+    
+    if(eventsMessages):
+        return "".join(eventsMessages)
+    else:
+        return "На этот день у вас ничего не запланировано! 😉"
+    
+def prepareSchedule(days):
+    pass
+
+
+def prepareWeekInterval():
+    pass
