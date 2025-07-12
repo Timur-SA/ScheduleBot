@@ -10,49 +10,57 @@ def loadGlobalFile():
     with open(_path.join(localDir, "DataTables", "global.json"), "r", encoding="utf-8") as jsonFile:
         return json.load(jsonFile)
 
-# def loadLocalFile(filename):
-#     try:
-#         with open(_path.join(localDir, "DataTables", f"{filename}.json"), "r+", encoding="utf-8") as jsonFile:
-#             return json.load(jsonFile)
-#     except FileNotFoundError:
-#         with open(_path.join(localDir, "DataTables", f"{filename}.json"), "w", encoding="utf-8") as jsonFile:
-#             json.dump({}, jsonFile, ensure_ascii=False, indent=2)
-#             return json.load(jsonFile)
+def loadLocalFile(filename):
+    try:
+        with open(_path.join(localDir, "DataTables", f"{filename}.json"), "r", encoding="utf-8") as jsonFile:
+            return json.load(jsonFile)
+    except FileNotFoundError:
+        return []
+
 
 def getDays(dataTable): 
     for day in dataTable:
         print(f"{day}")
 
-def getDayData(dataTable, delta = 0):
-    if(delta < 0): print("Runtime Warning: Delta < 0!")
+def getDayData(dataTable, delta = 0)-> dict: 
+    if(delta < 0): raise(RuntimeWarning("Delta is < 0!"))
 
     eventsDay = datetime.now().date()
     eventsDay += timedelta(delta)
 
 
-    day = dataTable.get(eventsDay.strftime("%Y-%m-%d"), [])
+    day = dataTable.get(eventsDay.strftime("%Y-%m-%d"))
     return day
 
 
 def writeEvent(addArgs:list[str], username):
-    # localFile = loadLocalFile(username)
-
-    # print(localFile)
-    # localFile[addArgs[-2]] = {"time": addArgs[-1], "name": addArgs[:-2]}
-    # print(localFile)
+    eventDay = addArgs[-2]
+    eventTime = addArgs[-1]
+    eventName = addArgs[:-2]
+    
     try:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "r+", encoding="utf-8") as jsonFile:
-            jsonData = json.load(jsonFile)
-            jsonFile.seek(0)  
-            jsonFile.truncate() 
+            try:
+                jsonData = json.load(jsonFile)
+                _recoveryData = jsonData
+                jsonFile.seek(0)  
+                jsonFile.truncate() 
 
-            jsonData[addArgs[-2]].append(
-                {"time": addArgs[-1],
-                 "name": " ".join(addArgs[:-2])})
-            
-            jsonData[addArgs[-2]] = sorted(jsonData[addArgs[-2]], key=lambda x: x['time'])
-            json.dump(jsonData, jsonFile, ensure_ascii=False, indent=2)
-        
+                if eventDay in jsonData:
+                    jsonData[eventDay].append(
+                        {"time": eventTime,
+                        "name": " ".join(eventName)})
+                else:
+                    jsonData[eventDay] = [{
+                        "time": eventTime,
+                        "name": " ".join(eventName)}]
+                jsonData[eventDay] = sorted(jsonData[eventDay], key=lambda x: x['time'])
+                json.dump(jsonData, jsonFile, ensure_ascii=False, indent=2)
+
+            except Exception:
+                json.dump(_recoveryData, jsonFile, ensure_ascii=False, indent=2)
+                raise RuntimeWarning("Write event into JSON failure")
+
     except FileNotFoundError:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "w", encoding="utf-8") as jsonFile:
             json.dump(
@@ -63,15 +71,13 @@ def writeEvent(addArgs:list[str], username):
                 jsonFile, ensure_ascii=False, indent=2)
 
 
-def writeFile(filename, file):
-    pass
-
 def prepareDayMessage(eventsList):
     eventsMessages = []
     for event in eventsList:
         eventsMessages.append(f"{event['time']} - {event['name']}\n")
     
     if(eventsMessages):
+        print(eventsMessages)
         return "".join(eventsMessages)
     else:
         return "На этот день у вас ничего не запланировано! 😉"

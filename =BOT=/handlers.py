@@ -14,6 +14,15 @@ async def start(msg: Message):
 @router.message(Command("today"))
 async def today(msg: Message):
     events = data.getDayData(data.loadGlobalFile())
+    print("1")
+    print(events)
+    print("1")
+
+    events.extend(data.getDayData(data.loadLocalFile(msg.from_user.id)))
+    print("2")
+    print(events)
+    print("2")
+
     await msg.answer(data.prepareDayMessage(events))
     
 @router.message(Command("tomorrow"))
