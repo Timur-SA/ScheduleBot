@@ -12,12 +12,27 @@ async def start(msg: Message):
 
 @router.message(Command("today"))
 async def today(msg: Message):
-    await msg.reply(f"Привет!")
-    data.getEventsbyDay(data.loadData())
+    events = data.getDayData(data.loadData())
+    eventsMessages = []
+    for event in events:
+        eventsMessages.append(f"{event['time']} - {event['name']}\n")
+    
+    if(eventsMessages):
+        await msg.answer("".join(eventsMessages))
+    else:
+        await msg.answer("На этот день у вас ничего не запланировано! 😉")
 
 @router.message(Command("tomorrow"))
 async def tomorrow(msg: Message):
-    await msg.reply(f"Привет!")
+    events = data.getDayData(data.loadData(), 1)
+    eventsMessages = []
+    for event in events:
+        eventsMessages.append(f"{event['time']} - {event['name']}\n")
+    
+    if(eventsMessages):
+        await msg.answer("".join(eventsMessages))
+    else:
+        await msg.answer("На этот день у вас ничего не запланировано! 😉")
 
 @router.message(Command("week"))
 async def week(msg: Message):

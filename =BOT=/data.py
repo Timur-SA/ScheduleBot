@@ -14,15 +14,13 @@ def getDays(dataTable):
     for day in dataTable:
         print(f"{day} - {[event for event in day]}")
 
-def getEventsbyDay(dataTable, delta = 0):
+def getDayData(dataTable, delta = 0):
     if(delta < 0): print("Runtime Warning: Delta < 0!")
 
     eventsDay = datetime.now().date()
     eventsDay += timedelta(delta)
 
-    for day in dataTable:
-        print(day)
 
-    #print(dataTable.get(eventsDay.strftime("%Y-%m-%d"), []))
-    events = dataTable.get("2025-07-13", [])
-    print(events)
+    #events = dataTable.get("2025-07-13", [])
+    day = dataTable.get(eventsDay.strftime("%Y-%m-%d"), [])
+    return day
