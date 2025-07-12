@@ -13,30 +13,30 @@ async def start(msg: Message):
 
 @router.message(Command("today"))
 async def today(msg: Message):
-    events = data.getDayData(data.loadData())
+    events = data.getDayData(data.loadGlobalFile())
     await msg.answer(data.prepareDayMessage(events))
     
 @router.message(Command("tomorrow"))
 async def tomorrow(msg: Message):
-    events = data.getDayData(data.loadData(), 1)
+    events = data.getDayData(data.loadGlobalFile(), 1)
     await msg.answer(data.prepareDayMessage(events))
 
 @router.message(Command("week"))
 async def week(msg: Message): pass
 
 @router.message(Command("days"))
-async def days(msg: Message): print(data.getDays(data.loadData()))    
+async def days(msg: Message): print(data.getDays(data.loadGlobalFile()))    
 
 
 @router.message(Command("add"))
 async def add(msg: Message):
     if(re.match(r"^/add (.+?) (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$", msg.text)):
         await msg.answer("Yes")
+        args = msg.text.split()[1:]
+        data.writeEvent(args, msg.from_user.id)
     else:
         await msg.answer("No")
-        
-    args = msg.text.split()[1:]
-    
+
 
 @router.message(Command("help"))
 async def help(msg: Message):
