@@ -42,7 +42,17 @@ def writeEvent(addArgs:list[str], username):
     # print(localFile)
     try:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "r+", encoding="utf-8") as jsonFile:
-            return json.load(jsonFile)
+            jsonData = json.load(jsonFile)
+            jsonFile.seek(0)  
+            jsonFile.truncate() 
+
+            jsonData[addArgs[-2]].append(
+                {"time": addArgs[-1],
+                 "name": " ".join(addArgs[:-2])})
+            
+            jsonData[addArgs[-2]] = sorted(jsonData[addArgs[-2]], key=lambda x: x['time'])
+            json.dump(jsonData, jsonFile, ensure_ascii=False, indent=2)
+        
     except FileNotFoundError:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "w", encoding="utf-8") as jsonFile:
             json.dump(
