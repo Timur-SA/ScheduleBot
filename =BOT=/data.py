@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timedelta
 from sys import argv as _argv
 from os import path as _path
-
 localDir = _path.dirname(_argv[0])
 
 
@@ -18,9 +17,13 @@ def loadLocalFile(filename):
         return {}
 
 
-def getDays(dataTable): 
+def getEvents(dataTable):
+    events = []
     for day in dataTable:
-        print(f"{day}")
+        for event in dataTable[day]:
+            event.update({"day": day})
+            events.append(event)
+    return events
 
 def getDayData(dataTable, delta = 0)-> dict: 
     if(delta < 0): raise(RuntimeWarning("Delta is < 0!"))
