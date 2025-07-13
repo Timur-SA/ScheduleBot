@@ -1,17 +1,14 @@
 import json
 from datetime import datetime, timedelta
-from sys import argv as _argv
-from os import path as _path
-localDir = _path.dirname(_argv[0])
-
+from config import localPath, path
 
 def loadGlobalFile():
-    with open(_path.join(localDir, "DataTables", "global.json"), "r", encoding="utf-8") as jsonFile:
+    with open(path.join(localPath, "DataTables", "global.json"), "r", encoding="utf-8") as jsonFile:
         return json.load(jsonFile)
 
 def loadLocalFile(filename):
     try:
-        with open(_path.join(localDir, "DataTables", f"{filename}.json"), "r", encoding="utf-8") as jsonFile:
+        with open(path.join(localPath, "DataTables", f"{filename}.json"), "r", encoding="utf-8") as jsonFile:
             return json.load(jsonFile)
     except FileNotFoundError:
         return {}
@@ -53,7 +50,7 @@ def writeNotification(addArgs:list[str], uid)->str:
     eventName = addArgs[:-2]
     
     try:
-        with open(_path.join(localDir, "DataTables", f"{uid}.json"), "r+", encoding="utf-8") as jsonFile:
+        with open(path.join(localPath, "DataTables", f"{uid}.json"), "r+", encoding="utf-8") as jsonFile:
             _recoveryData = {}
             try:
                 eventStatus = validateDate(eventDay, eventTime, uid)
@@ -90,7 +87,7 @@ def writeNotification(addArgs:list[str], uid)->str:
                 raise RuntimeWarning("Write event into JSON failure")
 
     except FileNotFoundError:
-        with open(_path.join(localDir, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
+        with open(path.join(localPath, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
             eventStatus = "OK"
             json.dump(
                 {addArgs[-2]: 
@@ -107,7 +104,7 @@ def deleteNotification(delArgs:list[str], uid):
 
     dataTable[delDay] = [event for event in dataTable.get(delDay) if event["time"] != delTime]
     
-    with open(_path.join(localDir, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
+    with open(path.join(localPath, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
         json.dump(dataTable, jsonFile, ensure_ascii=False, indent=2)
 
 

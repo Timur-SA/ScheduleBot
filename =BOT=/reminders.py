@@ -1,8 +1,9 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime, timedelta
+from config import localPath, path
 
-jobstore = SQLAlchemyJobStore(url='sqlite:///DataTables/notifications.sqlite')
+jobstore = SQLAlchemyJobStore(url=f'sqlite:///{path.join(localPath, "DataTables", "notifications.sqlite")}')
 scheduler = AsyncIOScheduler(jobstores={'default': jobstore})
 
 def scheduleReminder(cid, notificationDate:datetime, notificationDeltas:list[int], func, beforeText, actualText, eventName:str):

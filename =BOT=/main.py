@@ -4,7 +4,7 @@ from aiogram.exceptions import TelegramNetworkError
 
 from handlers import router
 from reminders import scheduler
-from botInstance import bot
+from config import bot
 
 async def main():
     dp = Dispatcher()

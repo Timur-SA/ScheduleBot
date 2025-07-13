@@ -6,7 +6,7 @@ from aiogram.filters import CommandStart, Command
 import re
 from datetime import datetime
 import data, keyboards as kb, reminders
-from botInstance import bot
+from config import bot
 router = Router()
 deleteState = State()
 
@@ -61,7 +61,7 @@ async def tomorrow(msg: Message):
     await msg.answer(getNotificationsbyDay(msg.from_user.id, deltaDays=1))
 
 @router.message(Command("week"))
-async def week(msg: Message): pass
+async def week(msg: Message): await msg.answer("❌ Команда недоступна")
 
 
 @router.message(Command("add"))
