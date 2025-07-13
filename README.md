@@ -39,7 +39,7 @@ bot = Bot(token="ТОКЕН")
 
 6) Бот запущен!
 > [!IMPORTANT]
-> При стандартном токене, бот доступен по ссылке: https://t.me/SiriusSchedule_bot (@SiriusSchedule_bot)
+> При стандартном токене, бот доступен по ссылке: https://t.me/SiriusUniversitySchedule_Bot (@SiriusUniversitySchedule_Bot)
 
 # Технические решения
 ## Aiogram
@@ -132,4 +132,4 @@ bot = Bot(token="ТОКЕН")
 
 
 ---
-**Исходя из доступного функционала, считаю разработку MVP успешной.**
+**Исходя из разработанного функционала, считаю разработку MVP успешной.**
