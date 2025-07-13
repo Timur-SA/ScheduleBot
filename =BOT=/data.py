@@ -15,7 +15,7 @@ def loadLocalFile(filename):
         with open(_path.join(localDir, "DataTables", f"{filename}.json"), "r", encoding="utf-8") as jsonFile:
             return json.load(jsonFile)
     except FileNotFoundError:
-        return []
+        return {}
 
 
 def getDays(dataTable): 
@@ -28,34 +28,60 @@ def getDayData(dataTable, delta = 0)-> dict:
     eventsDay = datetime.now().date()
     eventsDay += timedelta(delta)
 
-
+    
     day = dataTable.get(eventsDay.strftime("%Y-%m-%d"))
     return day
 
 
-def writeEvent(addArgs:list[str], username):
+def findNotification(username, day, time):
+    localData = loadLocalFile(username)
+    if day in localData:
+        events = [event for event in localData[day] if event["time"] == time]
+
+        if events: return True
+        else:      return False
+
+    else: return False
+            
+
+def writeEvent(addArgs:list[str], username)->str:
     eventDay = addArgs[-2]
     eventTime = addArgs[-1]
     eventName = addArgs[:-2]
     
     try:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "r+", encoding="utf-8") as jsonFile:
+            _recoveryData = {}
             try:
-                jsonData = json.load(jsonFile)
-                _recoveryData = jsonData
-                jsonFile.seek(0)  
-                jsonFile.truncate() 
+                eventStatus = validateDate(eventDay, eventTime, username)
 
-                if eventDay in jsonData:
-                    jsonData[eventDay].append(
-                        {"time": eventTime,
-                        "name": " ".join(eventName)})
-                else:
-                    jsonData[eventDay] = [{
-                        "time": eventTime,
-                        "name": " ".join(eventName)}]
-                jsonData[eventDay] = sorted(jsonData[eventDay], key=lambda x: x['time'])
-                json.dump(jsonData, jsonFile, ensure_ascii=False, indent=2)
+                if eventStatus in ("OK", "replacement"):
+                    jsonData = json.load(jsonFile)
+                    _recoveryData = jsonData
+                    jsonFile.seek(0)  
+                    jsonFile.truncate() 
+
+                    if eventDay in jsonData:
+                        if eventStatus == "OK": 
+                            jsonData[eventDay].append(
+                                {"time": eventTime,
+                                "name": " ".join(eventName)})
+                        else:
+                            jsonData[eventDay] = [exlEvents for exlEvents in jsonData[eventDay] if exlEvents["time"] != eventTime]
+                            print(jsonData[eventDay])
+                            jsonData[eventDay].append(
+                                {"time": eventTime,
+                                "name": " ".join(eventName)})
+                    else:
+                        jsonData[eventDay] = [{
+                            "time": eventTime,
+                            "name": " ".join(eventName)}]
+                    jsonData[eventDay] = sorted(jsonData[eventDay], key=lambda x: x['time'])
+                    json.dump(jsonData, jsonFile, ensure_ascii=False, indent=2)
+                    
+                    return eventStatus
+                
+                else: return eventStatus
 
             except Exception:
                 json.dump(_recoveryData, jsonFile, ensure_ascii=False, indent=2)
@@ -63,12 +89,14 @@ def writeEvent(addArgs:list[str], username):
 
     except FileNotFoundError:
         with open(_path.join(localDir, "DataTables", f"{username}.json"), "w", encoding="utf-8") as jsonFile:
+            eventStatus = "OK"
             json.dump(
                 {addArgs[-2]: 
                 [{"time": addArgs[-1],
                   "name": " ".join(addArgs[:-2])}]
                 },
                 jsonFile, ensure_ascii=False, indent=2)
+            return "OK"
 
 
 def prepareDayMessage(eventsList):
@@ -77,7 +105,6 @@ def prepareDayMessage(eventsList):
         eventsMessages.append(f"{event['time']} - {event['name']}\n")
     
     if(eventsMessages):
-        print(eventsMessages)
         return "".join(eventsMessages)
     else:
         return "На этот день у вас ничего не запланировано! 😉"
@@ -87,3 +114,13 @@ def prepareSchedule(days):
 
 def prepareWeekInterval():
     pass
+
+
+def validateDate(day, time, username)->str:
+    date = datetime.fromisoformat(f"{day}T{time}") #!!!!
+    if(date < datetime.now()):
+        return "unactual"
+    elif findNotification(username, day, time):
+        return "replacement"
+    else:
+        return "OK"
