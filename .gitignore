@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 =BOT=/DataTables/1450176267.json
 /=BOT=/DataTables
+=BOT=/notifications.sqlite

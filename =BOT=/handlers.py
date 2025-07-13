@@ -4,7 +4,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, Command
 import re
-import data, keyboards as kb
+from datetime import datetime
+import data, keyboards as kb, reminders
+from botInstance import bot
 router = Router()
 deleteState = State()
 
@@ -65,8 +67,15 @@ async def add(msg: Message):
         args = msg.text.split()[1:]
         status = data.writeNotification(args, msg.from_user.id)
 
-        if(status=="OK"): await msg.answer("🔔 Напоминание успешно добавлено!")
-        elif(status=="replacement"): await msg.answer("🔄 Напоминание отредактировано!")
+        if(status=="OK"): 
+            await msg.answer("🔔 Напоминание успешно добавлено!")
+            reminders.scheduleReminder(msg.chat.id, datetime.fromisoformat(f"{args[-2]}T{args[-1]}"), [1], notification, "🔔 Напоминание успешно добавлено!", "🔔 Сработало напоминание!", " ".join(args[:-2]))
+
+        elif(status=="replacement"): 
+            await msg.answer("🔄 Напоминание отредактировано!")
+            reminders.scheduleReminder(msg.chat.id, datetime.fromisoformat(f"{args[-2]}T{args[-1]}"), [1], notification, "🔔 Напоминание успешно добавлено!", "🔔 Сработало напоминание!", " ".join(args[:-2]))
+
+        
         elif(status=="unactual"): await msg.answer("😅 Время напоминания уже прошло")
         else: raise RuntimeError("Status invalid")
 
@@ -105,3 +114,8 @@ parse_mode="markdown")
 @router.message(Command("schedule"))
 async def schedule(msg: Message):
     await msg.reply(f"-Как добавить своё напоминание?\n/add (Название) (Дата в формате: <ГГГГ-ММ-ДД>) (Время в формате: <чч:мм>)\nПример: `/add Ваше первое напоминание!🥳 2025-07-31 15:00` 👈", parse_mode="markdown")
+
+
+async def notification(cid, notificationTime, msgText, notificationName):
+    print("Сработало!")
+    await bot.send_message(cid, f"{msgText}\n{notificationTime} - {notificationName}")
