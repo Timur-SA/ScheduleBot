@@ -1,5 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramNetworkError
 
 from handlers import router
 
@@ -15,5 +16,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("🚫 Бот выключается")
+    except TelegramNetworkError:
+        print("Соеденение потеряно...")
 else:
-    print("⚠ Бот запущен через диспетчер / Ошибка импорта")
+    print("⚠ Бот запущен через диспетчер обновлений / Ошибка импорта")

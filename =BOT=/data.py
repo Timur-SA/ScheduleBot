@@ -33,27 +33,27 @@ def getDayData(dataTable, delta = 0)-> dict:
     return day
 
 
-def findNotification(username, day, time):
-    localData = loadLocalFile(username)
+def findNotification(uid, day, time):
+    localData = loadLocalFile(uid)
     if day in localData:
         events = [event for event in localData[day] if event["time"] == time]
 
-        if events: return True
-        else:      return False
+        if events: return True, events[0]["name"]
+        else:      return False, None
 
-    else: return False
+    else: return False, None
             
 
-def writeEvent(addArgs:list[str], username)->str:
+def writeNotification(addArgs:list[str], uid)->str:
     eventDay = addArgs[-2]
     eventTime = addArgs[-1]
     eventName = addArgs[:-2]
     
     try:
-        with open(_path.join(localDir, "DataTables", f"{username}.json"), "r+", encoding="utf-8") as jsonFile:
+        with open(_path.join(localDir, "DataTables", f"{uid}.json"), "r+", encoding="utf-8") as jsonFile:
             _recoveryData = {}
             try:
-                eventStatus = validateDate(eventDay, eventTime, username)
+                eventStatus = validateDate(eventDay, eventTime, uid)
 
                 if eventStatus in ("OK", "replacement"):
                     jsonData = json.load(jsonFile)
@@ -68,7 +68,6 @@ def writeEvent(addArgs:list[str], username)->str:
                                 "name": " ".join(eventName)})
                         else:
                             jsonData[eventDay] = [exlEvents for exlEvents in jsonData[eventDay] if exlEvents["time"] != eventTime]
-                            print(jsonData[eventDay])
                             jsonData[eventDay].append(
                                 {"time": eventTime,
                                 "name": " ".join(eventName)})
@@ -88,7 +87,7 @@ def writeEvent(addArgs:list[str], username)->str:
                 raise RuntimeWarning("Write event into JSON failure")
 
     except FileNotFoundError:
-        with open(_path.join(localDir, "DataTables", f"{username}.json"), "w", encoding="utf-8") as jsonFile:
+        with open(_path.join(localDir, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
             eventStatus = "OK"
             json.dump(
                 {addArgs[-2]: 
@@ -97,6 +96,16 @@ def writeEvent(addArgs:list[str], username)->str:
                 },
                 jsonFile, ensure_ascii=False, indent=2)
             return "OK"
+
+def deleteNotification(delArgs:list[str], uid):
+    dataTable = loadLocalFile(uid)
+    delDay = delArgs[0]
+    delTime = delArgs[1]
+
+    dataTable[delDay] = [event for event in dataTable.get(delDay) if event["time"] != delTime]
+    
+    with open(_path.join(localDir, "DataTables", f"{uid}.json"), "w", encoding="utf-8") as jsonFile:
+        json.dump(dataTable, jsonFile, ensure_ascii=False, indent=2)
 
 
 def prepareDayMessage(eventsList):
@@ -108,19 +117,15 @@ def prepareDayMessage(eventsList):
         return "".join(eventsMessages)
     else:
         return "На этот день у вас ничего не запланировано! 😉"
-    
-def prepareSchedule(days):
-    pass
-
-def prepareWeekInterval():
-    pass
 
 
 def validateDate(day, time, username)->str:
-    date = datetime.fromisoformat(f"{day}T{time}") #!!!!
+    date = datetime.fromisoformat(f"{day}T{time}")
     if(date < datetime.now()):
         return "unactual"
-    elif findNotification(username, day, time):
+    
+    status, _name = findNotification(username, day, time)
+    if status:
         return "replacement"
     else:
         return "OK"

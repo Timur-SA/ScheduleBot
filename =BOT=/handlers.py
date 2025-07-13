@@ -1,9 +1,12 @@
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.fsm.state import State
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, Command
 import re
-import data
+import data, keyboards as kb
 router = Router()
+deleteState = State()
 
 
 def getEvents(deltaDays=0):
@@ -19,6 +22,22 @@ def getNotifications(uid, deltaDays=0):
         return "\n".join(["🔔 Напоминания:", data.prepareDayMessage(notifications)])
     else:
         return "🔔 Напоминания отсутствуют"
+
+
+@router.callback_query(lambda q: q.data == 'accept')
+async def accept(cq: CallbackQuery, state: FSMContext):
+    stateData = await state.get_data()
+    delDate = stateData.get("date")
+    delTime = stateData.get("time")
+
+    data.deleteNotification([delDate, delTime], cq.from_user.id)
+    await cq.message.edit_text('🗑 Напоминание удалено')
+    await state.clear()
+
+@router.callback_query(lambda q: q.data == 'deny')
+async def accept(cq: CallbackQuery, state: FSMContext):
+    await cq.message.edit_text('Удаление отменено!')
+    await state.clear()
 
 
 @router.message(CommandStart())
@@ -44,16 +63,33 @@ async def week(msg: Message): pass
 async def add(msg: Message):
     if(re.match(r"^/add (.+?) (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$", msg.text)):
         args = msg.text.split()[1:]
-        status = data.writeEvent(args, msg.from_user.id)
+        status = data.writeNotification(args, msg.from_user.id)
 
         if(status=="OK"): await msg.answer("🔔 Напоминание успешно добавлено!")
         elif(status=="replacement"): await msg.answer("🔄 Напоминание отредактировано!")
         elif(status=="unactual"): await msg.answer("😅 Время напоминания уже прошло")
-        else: raise RuntimeError()
+        else: raise RuntimeError("Status invalid")
 
     else:
         await msg.answer("❗ Неверный формат напоминания!")
-        await msg.answer("Добавить своё напоминание: `/add Название напоминания ГГГГ-ММ-ДД чч:мм`", parse_mode="markdown")
+        await msg.answer("Добавить своё напоминание: `/add Название напоминания ГГГГ-ММ-ДД чч:мм` 👈", parse_mode="markdown")
+
+@router.message(Command("del", "delete"))
+async def delete(msg: Message, state = FSMContext):
+    if(re.match(r"^/del (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$", msg.text)):
+        args = msg.text.split()[1:]
+        status, notificationName = data.findNotification(msg.from_user.id, args[0], args[1])
+
+        if(status):
+            await state.set_state(deleteState)
+            await state.update_data(date=args[0], time=args[1])
+
+            await msg.answer(f"❓ Вы уверены, что хотите удалить напоминание {notificationName}?", reply_markup=kb.approvalKB)
+        else:
+            await msg.answer("❗ Напоминание не найдёно, проверьте правильность ввода!")
+    else:
+        await msg.answer("❗ Неверный формат!")
+        await msg.answer("Удалить напоминание: `/del ГГГГ-ММ-ДД чч:мм` 👈", parse_mode="markdown")
 
 
 @router.message(Command("help"))
@@ -61,11 +97,11 @@ async def help(msg: Message):
     await msg.reply(f"""/today - Вывести события на сегодня
 /tomorrow - Вывести события на завтра
 /week - Вывести расписание событий на всю неделю
-/add - Добавить своё событие (`/add [Название] <ГГГГ-ММ-ДД> <чч:мм>`)
+/add - Добавить своё событие (`/add [Название] <ГГГГ-ММ-ДД> <чч:мм>` 👈)
 /help - Список доступных команд 
 /schedule - Инструкция к команде /add (добавить событие)""",
 parse_mode="markdown")
 
 @router.message(Command("schedule"))
 async def schedule(msg: Message):
-    await msg.reply(f"-Как добавить своё напоминание?\n/add (Название) (Дата в формате: <ГГГГ-ММ-ДД>) (Время в формате: <чч:мм>)\nПример: `/add Ваше первое напоминание!🥳 2025-07-31 15:00`", parse_mode="markdown")
+    await msg.reply(f"-Как добавить своё напоминание?\n/add (Название) (Дата в формате: <ГГГГ-ММ-ДД>) (Время в формате: <чч:мм>)\nПример: `/add Ваше первое напоминание!🥳 2025-07-31 15:00` 👈", parse_mode="markdown")
